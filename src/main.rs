@@ -1,17 +1,21 @@
-use std::fs::File;
+use std::fs::OpenOptions;
 use std::io;
-use std::io::Result;
 use std::io::Write;
 
-fn main() -> Result<()> {
+fn main() {
     let mut todo = String::new();
     println!("Give me your todo");
     io::stdin().read_line(&mut todo).expect("Read line failed");
 
-    let mut todo_list = File::create("todo_list.txt")?;
+    let todo = todo.trim();
 
-    let _ = todo_list.write_all(todo.as_bytes());
-    todo_list.flush()?;
+    let mut todo_list = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .append(true)
+        .create(true)
+        .open("todo_list.txt")
+        .expect("C'est pas posible");
 
-    Ok(())
+    writeln!(todo_list, "{}", todo).expect("afsadva");
 }
