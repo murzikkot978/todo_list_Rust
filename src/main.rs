@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use serde_json::{self};
@@ -6,27 +7,31 @@ use std::fs::{self};
 use std::io;
 
 #[derive(Serialize, Deserialize)]
-
 struct Todo {
     contents: String,
     status: bool,
+    deadline: Option<NaiveDate>,
 }
 
 #[derive(Parser)]
 struct Flag {
-    /// Write nombre line
+    
+    #[arg(long)]
+    delete: bool,
+
+    
+    #[arg(long)]
+    done: bool,
+
+    #[arg(long)]
+    undone: bool,
+
+    
+    #[arg(long)]
+    due: Option<String>,
+
     #[arg(long, default_value_t = 0)]
-    delete: usize,
-
-    /// Write nombre line
-    #[arg(long, default_value_t = 0)]
-    done: usize,
-
-    /// Write nombre line
-    #[arg(long, default_value_t = 0)]
-    undone: usize,
-
-
+    id: usize
 }
 
 fn main() {
@@ -37,14 +42,25 @@ fn main() {
     };
 
     let flag: Flag = Flag::parse();
-    if flag.delete > 0 && flag.delete <= todos.len() {
-        todos.remove(flag.delete - 1);
+    if flag.delete {
+        todos.remove(flag.id - 1);
         println!("Tâche supprimée.");
-    } else if flag.done > 0 && flag.done <= todos.len() {
-        todos[flag.done - 1].status = true;
-    } else if flag.undone > 0 && flag.undone <= todos.len() {
-        todos[flag.undone -1].status = false;
-    }else {
+    } else if flag.done{
+        todos[flag.id - 1].status = true;
+    } else if flag.undone {
+        todos[flag.id - 1].status = false;
+    } else if let Some(date_string) = flag.due {
+    
+
+        match NaiveDate::parse_from_str(&date_string, "%Y-%m-%d") {
+            Ok(date) => {
+                todos[flag.id - 1].deadline = Some(date);
+            }
+            Err(_) => {
+                println!("Invalid date format! Please use YYYY-MM-DD.");
+            }
+        }
+    } else {
         let mut message = String::new();
         println!("Give me your todo : ");
         io::stdin()
@@ -56,6 +72,7 @@ fn main() {
         let todo = Todo {
             contents: message.to_string(),
             status: false,
+            deadline: None,
         };
 
         if message.contains("--delete") {
