@@ -21,6 +21,12 @@ struct Flag {
     /// Write nombre line
     #[arg(long, default_value_t = 0)]
     done: usize,
+
+    /// Write nombre line
+    #[arg(long, default_value_t = 0)]
+    undone: usize,
+
+
 }
 
 fn main() {
@@ -36,7 +42,9 @@ fn main() {
         println!("Tâche supprimée.");
     } else if flag.done > 0 && flag.done <= todos.len() {
         todos[flag.done - 1].status = true;
-    } else {
+    } else if flag.undone > 0 && flag.undone <= todos.len() {
+        todos[flag.undone -1].status = false;
+    }else {
         let mut message = String::new();
         println!("Give me your todo : ");
         io::stdin()
