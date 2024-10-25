@@ -13,45 +13,51 @@ struct Todo {
     deadline: Option<NaiveDate>,
 }
 
+// Define the Flag struct that will parse command-line flags using Clap
 #[derive(Parser)]
 struct Flag {
-    
     #[arg(long)]
     delete: bool,
 
-    
     #[arg(long)]
     done: bool,
 
     #[arg(long)]
     undone: bool,
 
-    
     #[arg(long)]
     due: Option<String>,
 
+    #[arg(long)]
+    list: bool,
+
     #[arg(long, default_value_t = 0)]
-    id: usize
+    id: usize,
 }
 
 fn main() {
-    //Open file.
+    // Open and read the todo file or create a new
     let mut todos: Vec<Todo> = match read_to_string("todo.json") {
         Err(_) => Vec::new(),
         Ok(todos) => serde_json::from_str(&todos).expect("can't open file todo.json"),
     };
 
+    // Parse command-line arguments into the Flag struct
     let flag: Flag = Flag::parse();
     if flag.delete {
         todos.remove(flag.id - 1);
         println!("Tâche supprimée.");
-    } else if flag.done{
+
+    // Set the status of the todo to true
+    } else if flag.done {
         todos[flag.id - 1].status = true;
+
+    // Set the status of the todo to false
     } else if flag.undone {
         todos[flag.id - 1].status = false;
-    } else if let Some(date_string) = flag.due {
-    
 
+    //Parse the date and set it as the deadline for the todo
+    } else if let Some(date_string) = flag.due {
         match NaiveDate::parse_from_str(&date_string, "%Y-%m-%d") {
             Ok(date) => {
                 todos[flag.id - 1].deadline = Some(date);
@@ -60,6 +66,12 @@ fn main() {
                 println!("Invalid date format! Please use YYYY-MM-DD.");
             }
         }
+    } else if flag.list {
+        for (i, list_todo) in todos.iter().enumerate() {
+            let status = if list_todo.status { "Done" } else { "Not Done" };
+
+            println!("{}. {} = {}", i + 1, list_todo.contents, status);
+        }
     } else {
         let mut message = String::new();
         println!("Give me your todo : ");
@@ -67,6 +79,7 @@ fn main() {
             .read_line(&mut message)
             .expect("Failed to read line");
 
+        // Trim whitespace from the input
         let message = message.trim();
 
         let todo = Todo {
@@ -75,6 +88,7 @@ fn main() {
             deadline: None,
         };
 
+        // If the user input includes the "--delete" flag, delete the todo at the specified position
         if message.contains("--delete") {
             //Find the last value.
             let test = message.split(" ").last();
@@ -86,6 +100,7 @@ fn main() {
         }
     }
 
+    // Write the updated list of todos back to the "todo.json"
     fs::write(
         "todo.json",
         serde_json::to_string(&todos).expect("can't write to file!"),
