@@ -31,6 +31,9 @@ struct Flag {
     #[arg(long)]
     list: bool,
 
+    #[arg(long)]
+    sort: bool,
+
     #[arg(long, default_value_t = 0)]
     id: usize,
 }
@@ -66,12 +69,18 @@ fn main() {
                 println!("Invalid date format! Please use YYYY-MM-DD.");
             }
         }
+
+    // Show the entire list of todo with status
     } else if flag.list {
         for (i, list_todo) in todos.iter().enumerate() {
             let status = if list_todo.status { "Done" } else { "Not Done" };
 
             println!("{}. {} = {}", i + 1, list_todo.contents, status);
         }
+
+    // Sort the entire list of todo by date
+    } else if flag.sort {
+        todos.sort_by(|a, b| a.deadline.cmp(&b.deadline));
     } else {
         let mut message = String::new();
         println!("Give me your todo : ");
@@ -88,16 +97,7 @@ fn main() {
             deadline: None,
         };
 
-        // If the user input includes the "--delete" flag, delete the todo at the specified position
-        if message.contains("--delete") {
-            //Find the last value.
-            let test = message.split(" ").last();
-            let nombre_line: usize = test.expect("Cannot split").parse().unwrap();
-
-            todos.remove(nombre_line - 1);
-        } else {
-            todos.push(todo);
-        }
+        todos.push(todo);
     }
 
     // Write the updated list of todos back to the "todo.json"
